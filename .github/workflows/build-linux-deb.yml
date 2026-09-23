@@ -1,0 +1,41 @@
+name: Build ZCode Linux DEB
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-deb:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm + Node
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'pnpm'
+
+      - name: Install system build deps
+        run: |
+          sudo apt update
+          sudo apt install -y fakeroot libarchive-tools build-essential
+
+      - name: Install pnpm dependencies
+        run: pnpm install
+
+      - name: Build desktop（输出deb）
+        run: pnpm bundle:desktop -- --os linux --arch x64 --package deb
+
+      - name: Upload deb artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ZCode-deb-x64
+          path: |
+            **/*.deb
+            !node_modules/**
