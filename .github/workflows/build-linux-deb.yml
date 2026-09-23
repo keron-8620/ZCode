@@ -20,6 +20,16 @@ jobs:
           node-version: 24
           cache: 'pnpm'
 
+      - name: Cache vite build output
+        uses: actions/cache@v4
+        with:
+          path: |
+            packages/desktop/dist
+            packages/desktop/node_modules/.vite
+          key: ${{ runner.os }}-zcode-vite-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-zcode-vite-
+
       - name: Install system build dependencies
         run: |
           sudo apt update
@@ -42,6 +52,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ZCode-Linux-x64-AppImage
-          path: |
-            ${{ env.APPIMAGE }}
-            !node_modules/**
+          # 只上传我们找到的AppImage文件，删掉 !node_modules/**
+          path: ${{ env.APPIMAGE }}
