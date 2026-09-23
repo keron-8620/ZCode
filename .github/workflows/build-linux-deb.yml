@@ -1,4 +1,4 @@
-name: Build ZCode DEB (Cloud Only)
+name: Build ZCode AppImage + DEB
 on:
   push:
     branches: [main]
@@ -11,9 +11,8 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v4
 
-      - name: Setup pnpm (auto detect version from package.json)
+      - name: Setup pnpm (auto read package.json pnpm version)
         uses: pnpm/action-setup@v4
-        # 👉 删除 version:10 这一行！自动读取项目内package.json的pnpm版本
 
       - name: Setup Node.js 24
         uses: actions/setup-node@v4
@@ -24,15 +23,25 @@ jobs:
       - name: Install system build dependencies
         run: |
           sudo apt update
-          sudo apt install -y fakeroot libarchive-tools build-essential
+          sudo apt install -y fakeroot libarchive-tools build-essential appimage2deb
 
       - name: Install project dependencies
         run: pnpm install
 
-      - name: Build ZCode desktop and output deb
-        run: pnpm bundle:desktop -- --os linux --arch x64 --package deb
+      - name: Build desktop AppImage
+        run: pnpm bundle:desktop -- --os linux --arch x64
 
-      - name: Upload deb as artifact
+      - name: Find generated AppImage
+        id: find_appimage
+        run: |
+          APPIMAGE=$(find . -name "ZCode-*.AppImage" | head -1)
+          echo "APPIMAGE=$APPIMAGE" >> $GITHUB_ENV
+
+      - name: Convert AppImage to deb
+        run: |
+          appimage2deb "$ENV{APPIMAGE}"
+
+      - name: Upload deb artifact
         uses: actions/upload-artifact@v4
         with:
           name: ZCode-Linux-x64-deb
