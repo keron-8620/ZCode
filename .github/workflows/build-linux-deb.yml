@@ -1,41 +1,41 @@
-name: Build ZCode Linux DEB
+name: Build ZCode DEB (Cloud Only)
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
 
 jobs:
-  build-deb:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout source
+      - name: Checkout source code
         uses: actions/checkout@v4
 
-      - name: Setup pnpm + Node
+      - name: Setup pnpm (auto detect version from package.json)
         uses: pnpm/action-setup@v4
-        with:
-          version: 10
-      - name: Use Node.js
+        # 👉 删除 version:10 这一行！自动读取项目内package.json的pnpm版本
+
+      - name: Setup Node.js 24
         uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: 'pnpm'
 
-      - name: Install system build deps
+      - name: Install system build dependencies
         run: |
           sudo apt update
           sudo apt install -y fakeroot libarchive-tools build-essential
 
-      - name: Install pnpm dependencies
+      - name: Install project dependencies
         run: pnpm install
 
-      - name: Build desktop（输出deb）
+      - name: Build ZCode desktop and output deb
         run: pnpm bundle:desktop -- --os linux --arch x64 --package deb
 
-      - name: Upload deb artifact
+      - name: Upload deb as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ZCode-deb-x64
+          name: ZCode-Linux-x64-deb
           path: |
             **/*.deb
             !node_modules/**
